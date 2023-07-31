@@ -110,10 +110,10 @@ workflow MAPLE {
 
     BAM_SORT_STATS_SAMTOOLS (
         ch_bam,
-        mm2_index
+        params.fasta
     )
-    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
 
+    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
     ch_sorted_bam = BAM_SORT_STATS_SAMTOOLS.out.bam
 
 
