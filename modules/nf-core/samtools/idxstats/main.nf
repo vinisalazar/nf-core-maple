@@ -1,6 +1,6 @@
 process SAMTOOLS_IDXSTATS {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_medium'
 
     conda "bioconda::samtools=1.17"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -24,7 +24,7 @@ process SAMTOOLS_IDXSTATS {
     """
     samtools \\
         idxstats \\
-        --threads ${task.cpus-1} \\
+        --threads ${task.cpus} \\
         $bam \\
         > ${prefix}.idxstats
 
