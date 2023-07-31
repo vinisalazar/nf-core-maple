@@ -37,11 +37,16 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT NF-CORE MODULES/SUBWORKFLOWS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+include { BAM_SORT_STATS_SAMTOOLS } from '../subworkflows/nf-core/bam_sort_stats_samtools/main'
+
+
+//
+// MODULE: local modules
+//
+
+include { COVERM_CONTIG                     } from '../modules/local/coverm/contig'
+include { SOURMASH_SKETCH                   } from '../modules/local/sourmash/sketch'
+
 
 //
 // MODULE: Installed directly from nf-core/modules
@@ -49,6 +54,8 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { MINIMAP2_INDEX              } from '../modules/nf-core/minimap2/index/main'
+include { MINIMAP2_ALIGN              } from '../modules/nf-core/minimap2/align/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,22 +76,40 @@ workflow MAPLE {
     INPUT_CHECK (
         file(params.input)
     )
+    ch_reads = INPUT_CHECK.out.reads
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
     // ! There is currently no tooling to help you write a sample sheet schema
 
     //
-    // MODULE: Run FastQC
+    // Add more modules after this line
     //
-    FASTQC (
-        INPUT_CHECK.out.reads
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
+    // MODULE: minimap2 index
+    mm2_index_meta = [id: "ugcmp_struo2_genes_db"]
+    if (!file(params.index).exists()) {
+        MINIMAP2_INDEX ( meta: mm2_index_meta, fasta: params.fasta )
+        mm2_index = MINIMAP2_INDEX.out.index.map{it[1]}
+        ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
+    }
+    else {
+        mm2_index = file(params.index)
+    }
+
+    // MODULE: minimap2 align
+    // MINIMAP2_ALIGN(
+    //     ch_reads,
+    //     params.fasta,
+    //     true,
+    //     false,
+    //     false
+    // )    
+    // MODULE: bam_sort_stats_samtools
+    // BAM_SORT_STATS_SAMTOOLS (
+    //     bam: MINIMAP2_ALIGN.out.bam,
+    
+    // )
 
     //
     // MODULE: MultiQC
@@ -95,11 +120,13 @@ workflow MAPLE {
     methods_description    = WorkflowMaple.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description, params)
     ch_methods_description = Channel.value(methods_description)
 
+    CUSTOM_DUMPSOFTWAREVERSIONS (
+        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    )
     ch_multiqc_files = Channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
