@@ -98,18 +98,24 @@ workflow MAPLE {
     }
 
     // MODULE: minimap2 align
-    // MINIMAP2_ALIGN(
-    //     ch_reads,
-    //     params.fasta,
-    //     true,
-    //     false,
-    //     false
-    // )    
-    // MODULE: bam_sort_stats_samtools
-    // BAM_SORT_STATS_SAMTOOLS (
-    //     bam: MINIMAP2_ALIGN.out.bam,
-    
-    // )
+    MINIMAP2_ALIGN(
+        ch_reads,
+        mm2_index,
+        true,
+        false,
+        false
+    )
+    ch_bam = MINIMAP2_ALIGN.out.bam
+    ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
+
+    BAM_SORT_STATS_SAMTOOLS (
+        ch_bam,
+        mm2_index
+    )
+    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
+
+    ch_sorted_bam = BAM_SORT_STATS_SAMTOOLS.out.bam
+
 
     //
     // MODULE: MultiQC
