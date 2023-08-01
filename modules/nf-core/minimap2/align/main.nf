@@ -1,6 +1,6 @@
 process MINIMAP2_ALIGN {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high_memory'
 
     // Note: the versions here need to match the versions used in the mulled container below and minimap2/index
     conda "bioconda::minimap2=2.24 bioconda::samtools=1.14"
@@ -24,16 +24,16 @@ process MINIMAP2_ALIGN {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    def args = task.ext.args ?: "-N 50 -ax sr --split-prefix ${meta.id}"
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def bam_output = bam_format ? "-a | samtools view -@ ${task.cpus} -b -h -o ${prefix}.bam" : "-o ${prefix}.paf"
+    def bam_output = bam_format ? " | samtools view -@ ${task.cpus} -b -F 3584 -o ${prefix}.bam" : "-o ${prefix}.paf"
     def cigar_paf = cigar_paf_format && !bam_format ? "-c" : ''
     def set_cigar_bam = cigar_bam && bam_format ? "-L" : ''
     """
     minimap2 \\
         -t $task.cpus \\
         $args \\
-        ${reference ?: reads} \\
+        $reference \\
         $reads \\
         $cigar_paf \\
         $set_cigar_bam \\
