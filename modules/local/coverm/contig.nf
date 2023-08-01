@@ -36,7 +36,7 @@ process COVERM_CONTIG {
 
     output:
 
-    tuple val(meta), path("*.coverm"), emit: coverm
+    tuple val(meta), path("*.coverm.gz"), emit: coverm
     path "versions.yml"           , emit: versions
 
     when:
@@ -49,11 +49,12 @@ process COVERM_CONTIG {
     """
     coverm contig \\
         -t $task.cpus \\
-        -b "${reference ?: sortedBam}" \\
+        -b ${sortedBam} \\
         -o ${prefix}.coverm \\
         -m mean trimmed_mean variance length count reads_per_base rpkm tpm \\
         --output-format sparse \\
         $args
+    gzip ${prefix}.coverm
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
