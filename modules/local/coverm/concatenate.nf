@@ -69,7 +69,7 @@ process COVERM_CONCATENATE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        : \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        \$(coverm --version 2>&1 | sed 's/m/m:/')
     END_VERSIONS
     """
 
@@ -85,7 +85,7 @@ process COVERM_CONCATENATE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        : \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        \$(coverm --version 2>&1 | sed 's/m/m:/')
     END_VERSIONS
     """
 }

@@ -46,7 +46,7 @@ process SOURMASH_SKETCH {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        : \$(echo \$(sourmash --version 2>&1) | sed 's/^.*sourmash //; s/Using.*\$//' ))
+        \$(sourmash --version 2>&1 | sed 's/h/h:/')
     END_VERSIONS
     """
 
@@ -62,7 +62,7 @@ process SOURMASH_SKETCH {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        : \$(echo \$(sourmash --version 2>&1) | sed 's/^.*sourmash //; s/Using.*\$//' ))
+        \$(sourmash --version 2>&1 | sed 's/h/h:/')
     END_VERSIONS
     """
 }

@@ -17,7 +17,7 @@
 
 process COVERM_CONTIG {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_low'
 
     // TODO nf-core: List required Conda package(s).
     conda "bioconda::coverm=0.6.1"
@@ -58,7 +58,7 @@ process COVERM_CONTIG {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        \$(coverm --version 2>&1)
+        \$(coverm --version 2>&1 | sed 's/m/m:/')
     END_VERSIONS
     """
 
@@ -66,11 +66,11 @@ process COVERM_CONTIG {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.coverm
+    touch ${prefix}.coverm.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        \$(coverm --version 2>&1)
+        \$(coverm --version 2>&1 | sed 's/m/m:/')
     END_VERSIONS
     """
 }
