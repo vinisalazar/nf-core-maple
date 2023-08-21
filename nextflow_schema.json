@@ -91,6 +91,30 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                },
+                "run_minimap2": {
+                    "type": "boolean",
+                    "description": "Run Minimap2 to generate the profiling database.",
+                    "fa_icon": "fas fa-database",
+                    "default": true,
+                    "hidden": true,
+                    "help_text": "Whether to run Minimap2 alignments or not."
+                },
+                "run_coverm": {
+                    "type": "boolean",
+                    "description": "Run CoverM to generate the coverage matrix.",
+                    "fa_icon": "fas fa-database",
+                    "default": true,
+                    "hidden": true,
+                    "help_text": "Whether to run CoverM or not."
+                },
+                "run_sourmash": {
+                    "type": "boolean",
+                    "description": "Run Sourmash to generate the signature matrix.",
+                    "fa_icon": "fas fa-database",
+                    "default": true,
+                    "hidden": true,
+                    "help_text": "Whether to run Sourmash or not."
                 }
             }
         },
