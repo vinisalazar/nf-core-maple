@@ -87,57 +87,67 @@ workflow MAPLE {
     //
 
     //
-    // MODULE: minimap2 index
+    // Minimap2 subworkflow
     //
-    mm2_index_meta = [id: "ugcmp_struo2_genes_db"]
-    if (!file(params.index).exists()) {
-        MINIMAP2_INDEX ( meta: mm2_index_meta, fasta: params.fasta )
-        ch_mm2_index = MINIMAP2_INDEX.out.index.map{it[1]}
-        ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
+    if (params.run_minimap2) {
+        //
+        // MODULE: minimap2 index
+        //
+        mm2_index_meta = [id: "ugcmp_struo2_genes_db"]
+        if (!file(params.index).exists()) {
+            MINIMAP2_INDEX ( meta: mm2_index_meta, fasta: params.fasta )
+            ch_mm2_index = MINIMAP2_INDEX.out.index.map{it[1]}
+            ch_versions = ch_versions.mix(MINIMAP2_INDEX.out.versions)
+        }
+        else {
+            ch_mm2_index = file(params.index)
+        }
+        //
+        // MODULE: minimap2 align
+        //
+        MINIMAP2_ALIGN(
+            ch_reads,
+            ch_mm2_index,
+            true,
+            false,
+            false
+        )
+        ch_bam = MINIMAP2_ALIGN.out.bam
+        ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
+        //
+        // SUBWORKFLOW: bam sort stats samtools
+        //
+        BAM_SORT_STATS_SAMTOOLS (
+            ch_bam,
+            ch_mm2_index
+        )
+
+        ch_sorted_bam = BAM_SORT_STATS_SAMTOOLS.out.bam
+        ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
     }
-    else {
-        ch_mm2_index = file(params.index)
-    }
 
-    //
-    // MODULE: minimap2 align
-    //
-    MINIMAP2_ALIGN(
-        ch_reads,
-        ch_mm2_index,
-        true,
-        false,
-        false
-    )
-    ch_bam = MINIMAP2_ALIGN.out.bam
-    ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
-    //
-    // SUBWORKFLOW: bam sort stats samtools
-    //
-    BAM_SORT_STATS_SAMTOOLS (
-        ch_bam,
-        ch_mm2_index
-    )
-
-    ch_sorted_bam = BAM_SORT_STATS_SAMTOOLS.out.bam
-    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
 
     //
     // MODULE: coverm contig
     //
-    COVERM_CONTIG (
-        ch_sorted_bam,
-    )
-    ch_coverm = COVERM_CONTIG.out.coverm
-    ch_versions = ch_versions.mix(COVERM_CONTIG.out.versions)
+    if (params.run_coverm) {
+        COVERM_CONTIG (
+            ch_sorted_bam,
+        )
+        ch_coverm = COVERM_CONTIG.out.coverm
+        ch_versions = ch_versions.mix(COVERM_CONTIG.out.versions)        
+    }
 
     //
     // MODULE: sourmash sketch
-    SOURMASH_SKETCH (
-        ch_reads,   
-    )
-    ch_versions = ch_versions.mix(SOURMASH_SKETCH.out.versions)
+    //
+    if (params.run_sourmash) {
+        SOURMASH_SKETCH (
+            ch_reads,   
+        )
+        ch_versions = ch_versions.mix(SOURMASH_SKETCH.out.versions)        
+    }
 
 
     //
